@@ -28,6 +28,7 @@ def k_means(data, k):
 		c_means = get_means(data, clusters, old_means)
 		
 		# If means didn't change, break the loop
+		#if(np.all(c_means - old_means < 0.001)):
 		if(np.all(c_means == old_means)):
 			break
 			
@@ -74,7 +75,7 @@ def clusterize(data, c_means):
 				min_idx = i
 				
 		clusters[j] = min_idx
-		
+	
 	return clusters
 	
 def get_means(data, clusters, old_means):
@@ -91,8 +92,8 @@ def get_means(data, clusters, old_means):
 	Output:
 	new_means numpy 2d numerical array
 	"""
-	new_means = np.zeros(old_means.shape)
-	mean_count = np.zeros(old_means.shape[0])
+	new_means = old_means
+	mean_count = np.ones(old_means.shape[0])
 	
 	for i in range(data.shape[0]):
 		idx = clusters[i]
@@ -118,7 +119,10 @@ def get_mse(data, clusters, c_means):
 	Outpu:
 	mse: float
 	"""
-	mse = None
+	mse = 0
+	for i in range(data.shape[0]):
+		mse += np.power(rgb_distance(data[i], c_means[clusters[i]]), 2)
+		
 	return mse
 	
 def rgb_distance(p1, p2):
@@ -141,8 +145,10 @@ def rgb_distance(p1, p2):
 	
 	return dis
 	
-print(k_means(
-	[[1, 2, 3],
-	 [2, 3, 4],
-	 [3, 4, 5],
-	 [4, 5, 6]], 2))
+	
+if __name__ == '__main__':
+	print(k_means(
+		[[1, 2, 3],
+		 [2, 3, 4],
+		 [3, 4, 5],
+		 [4, 5, 6]], 2))
