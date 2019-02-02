@@ -10,7 +10,7 @@ def k_means(data, k):
 	
 	Output:
 	c_means: numpy 2d numerical array
-	clusters: numpy 2d numerical array
+	clusters: numpy 1d numerical array
 	mse: float
 	"""
 	data = np.array(data)
@@ -49,9 +49,32 @@ def clusterize(data, c_means):
 	c_means: numpy 2d numerical array
 	
 	Outut:
-	clusters: numpy 2d anumerical rray
+	clusters: numpy 1d anumerical rray
 	"""
-	clusters = None
+	# Extract k
+	k = c_means.shape[0]
+	
+	# Initialize cluster categorization array
+	clusters = np.ndarray(
+		shape = [data.shape[0]],
+		dtype = np.int32
+	)
+	
+	# For every datapoint search the cluster it is the nearest to
+	# and assign the index(cluster id) to the clusters categorization
+	# array
+	for j, datap in enumerate(data):
+		min_dis = float('inf')
+		min_idx = -1
+		
+		for i in range(k):
+			cluster_i_dis = rgb_distance(datap, c_means[i])
+			if(cluster_i_dis < min_dis):
+				min_dis = cluster_i_dis
+				min_idx = i
+				
+		clusters[j] = min_idx
+		
 	return clusters
 	
 def get_means(data, clusters, old_means):
@@ -68,7 +91,17 @@ def get_means(data, clusters, old_means):
 	Output:
 	new_means numpy 2d numerical array
 	"""
-	new_means = None
+	new_means = np.zeros(old_means.shape)
+	mean_count = np.zeros(old_means.shape[0])
+	
+	for i in range(data.shape[0]):
+		idx = clusters[i]
+		new_means[idx] = new_means[idx] + data[i]
+		mean_count[idx] += 1
+		
+	for i in range(new_means.shape[0]):
+		new_means[i] = new_means[i] / mean_count[i]
+	
 	return new_means
 	
 def get_mse(data, clusters, c_means):
@@ -87,6 +120,26 @@ def get_mse(data, clusters, c_means):
 	"""
 	mse = None
 	return mse
+	
+def rgb_distance(p1, p2):
+	"""
+	given two rgb pixels, returns the rgb distance from the first to
+	the second
+	
+	Arguments:
+	p1: numpy 1d numerical array with shape [3]
+	p2: numpy 1d numerical array with shape [3]
+	
+	Output:
+	dis: float
+	"""
+	r = (p1[0]+p2[0])/2
+	s = np.array([2+(r/256), 4, (2+(255-r))/256])
+	px = p1 - p2
+	
+	dis = np.sqrt( np.sum( px[i]*px[i]*s[i] for i in range(3) ) )
+	
+	return dis
 	
 print(k_means(
 	[[1, 2, 3],
