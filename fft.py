@@ -1,8 +1,9 @@
 import numpy as np
 
-def fft(data, n, distance_f):
+def deterministic_fft(data, n, distance_f):
 	"""
-	Farthest First Traversal implementation with n points
+	deterministic Farthest First Traversal implementation with n points
+	using mode as starting point
 	
 	Arguments:
 	data: numpy 2d numerical array
@@ -23,9 +24,9 @@ def fft(data, n, distance_f):
 	# Create n_traversed array
 	n_traversed = np.ndarray([n, data.shape[1]], dtype = np.float32)
 	
-	# Select first point randomly
-	idx = np.random.randint(data.shape[0])
-	
+	# Select mode as the starting point
+	start_p = get_mode(data)
+	idx = np.where(np.all(data == start_p, axis = 1))
 	n_traversed[0] = data[idx]
 	data = np.delete(data, idx, axis = 0)
 	
@@ -48,6 +49,27 @@ def fft(data, n, distance_f):
 		data = np.delete(data, max_dis_idx, axis = 0)
 	
 	return n_traversed
+	
+def get_mode(data):
+	
+	element_count = {}
+	
+	for datap in data:
+		key = str(datap)
+		if(element_count.get(key)):
+			element_count[key] += 1
+		else:
+			element_count[str(datap)] = 1
+	
+	max_count = 0
+	mode = None	
+	for elem, count in element_count.items():
+		if(count > max_count):
+			mode = elem
+			
+	mode = np.fromstring(mode[1:-1], dtype = np.uint8, sep = ' ')
+	
+	return mode
 
 if __name__ == '__main__':	
 	def euc_distance(p1, p2):
@@ -62,7 +84,7 @@ if __name__ == '__main__':
 		[5, 0, 5],
 		[5, 5, 5]]
 	)
-	b = fft(a, 8, euc_distance)
+	b = deterministic_fft(a, 3, euc_distance)
 	
 	idx = np.where(np.all(a == b[0], axis = 1))
 	a = np.delete(a, idx, axis = 0)
@@ -84,4 +106,3 @@ if __name__ == '__main__':
 		
 		idx = np.where(np.all(a == b[i+1], axis = 1))
 		a = np.delete(a, idx, axis = 0)
-
