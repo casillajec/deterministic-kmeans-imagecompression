@@ -1,6 +1,7 @@
 from kmeans import k_means
 import numpy as np
 import argparse
+import time
 import cv2
 
 if __name__ == '__main__':
@@ -36,7 +37,9 @@ if __name__ == '__main__':
 	image = image.reshape([image.shape[0] * image.shape[1], 3]).astype(np.float32)
 	
 	# Run k-means
+	t0 = time.time()
 	c_means, clusters, mse = k_means(image, K)
+	t1 = time.time()
 	
 	# Create compressed image
 	compressed_image = np.zeros(image.shape)
@@ -52,6 +55,7 @@ if __name__ == '__main__':
 	cv2.imwrite('compressed.png', compressed_image)
 	
 	print('Done compressing!\nFinal MSE:', mse)
+	print('Took:', t1-t0, 's')
 	
 	
 	

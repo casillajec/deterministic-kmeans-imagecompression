@@ -1,4 +1,6 @@
 import numpy as np
+import time
+from fft import deterministic_fft
 
 def k_means(data, k):
 	"""
@@ -15,8 +17,11 @@ def k_means(data, k):
 	"""
 	data = np.array(data)
 	
+	t0 = time.time()
 	# Initialize cluster means randomly
-	c_means = data[np.random.choice(data.shape[0], size = k, replace = False)]
+	c_means = deterministic_fft(data, k, rgb_distance)
+	t1 = time.time()
+	print('Time for FFT:', t1-t0, 's')
 	
 	# Initial clusterization
 	clusters = clusterize(data, c_means)
@@ -27,9 +32,9 @@ def k_means(data, k):
 		old_means = c_means
 		c_means = get_means(data, clusters, old_means)
 		
+		dif = c_means - old_means
 		# If means didn't change, break the loop
-		#if(np.all(c_means - old_means < 0.001)):
-		if(np.all(c_means == old_means)):
+		if(np.all(c_means - old_means < np.finfo(c_means.dtype).eps)):
 			break
 			
 		# Reclusterize
