@@ -31,8 +31,10 @@ def k_means(data, k):
 		old_means = c_means
 		c_means = get_means(data, clusters, old_means)
 		
+		dif = c_means - old_means
+		print('avg dif:', np.mean(dif))
 		# If means didn't change, break the loop
-		if(np.all(c_means - old_means < np.finfo(c_means.dtype).eps)):
+		if(np.all(dif < np.finfo(c_means.dtype).eps)):
 			break
 			
 		# Reclusterize
@@ -141,10 +143,10 @@ def rgb_distance(p1, p2):
 	dis: float
 	"""
 	r = (int(p1[0])+int(p2[0]))/2
-	s = np.array([2+(r/256), 4, (2+(255-r))/256], dtype = np.int32)
+	s = np.array([2+(r/256), 4, (2+(255-r))/256], dtype = np.float32)
 	px = p1 - p2
 	
-	dis = np.sqrt( np.sum( int(px[i])*int(px[i])*s[i] for i in range(3) ) )
+	dis = np.sqrt(np.sum(int(px[i])*int(px[i])*s[i] for i in range(3)))
 	
 	return dis
 	

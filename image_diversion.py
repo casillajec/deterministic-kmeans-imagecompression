@@ -30,7 +30,7 @@ def ptp_idm(im1, im2):
 		for j in range(distances.shape[1]):
 			distances[i][j] = rgb_distance(im1[i][j], im2[i][j])
 	
-	# Calculate the Image Diversion Measurement		
+	# Calculate the Image Diversion Measurement	by adding distances	
 	idm = np.sum(distances)
 	
 	return idm

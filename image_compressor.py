@@ -43,9 +43,9 @@ if __name__ == '__main__':
 	t1 = time.time()
 	
 	# Create compressed image
-	compressed_image = np.zeros(image.shape)
+	compressed_image = np.zeros(image.shape, dtype = np.uint8)
 	for i in range(compressed_image.shape[0]):
-		compressed_image[i] = c_means[clusters[i]]
+		compressed_image[i] = c_means[clusters[i]].astype(np.uint8)
 		
 	# Return to original shape
 	image = image.reshape(original_shape).astype(np.uint8)
@@ -58,6 +58,4 @@ if __name__ == '__main__':
 	print('Done compressing!\nFinal MSE:', mse)
 	print('IDM:', ptp_idm(image, compressed_image))
 	print('Took:', t1-t0, 's')
-	
-	
 	
