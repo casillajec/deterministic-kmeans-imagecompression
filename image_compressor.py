@@ -1,4 +1,5 @@
 from kmeans import k_means
+from image_diversion import ptp_idm
 import numpy as np
 import argparse
 import time
@@ -34,7 +35,7 @@ if __name__ == '__main__':
 	# Store original shape
 	original_shape = image.shape
 	# Reshape into a numpy 2d array
-	image = image.reshape([image.shape[0] * image.shape[1], 3]).astype(np.float32)
+	image = image.reshape([image.shape[0] * image.shape[1], 3])
 	
 	# Run k-means
 	t0 = time.time()
@@ -55,6 +56,7 @@ if __name__ == '__main__':
 	cv2.imwrite('compressed.png', compressed_image)
 	
 	print('Done compressing!\nFinal MSE:', mse)
+	print('IDM:', ptp_idm(image, compressed_image))
 	print('Took:', t1-t0, 's')
 	
 	

@@ -15,11 +15,10 @@ def k_means(data, k):
 	clusters: numpy 1d numerical array
 	mse: float
 	"""
-	data = np.array(data)
 	
 	t0 = time.time()
 	# Initialize cluster means randomly
-	c_means = deterministic_fft(data, k, rgb_distance)
+	c_means = deterministic_fft(data, k, rgb_distance).astype(np.float32)
 	t1 = time.time()
 	print('Time for FFT:', t1-t0, 's')
 	
@@ -32,7 +31,6 @@ def k_means(data, k):
 		old_means = c_means
 		c_means = get_means(data, clusters, old_means)
 		
-		dif = c_means - old_means
 		# If means didn't change, break the loop
 		if(np.all(c_means - old_means < np.finfo(c_means.dtype).eps)):
 			break
@@ -98,7 +96,7 @@ def get_means(data, clusters, old_means):
 	new_means numpy 2d numerical array
 	"""
 	new_means = old_means
-	mean_count = np.ones(old_means.shape[0])
+	mean_count = np.ones(old_means.shape[0], dtype = np.int64)
 	
 	for i in range(data.shape[0]):
 		idx = clusters[i]
@@ -142,11 +140,11 @@ def rgb_distance(p1, p2):
 	Output:
 	dis: float
 	"""
-	r = (p1[0]+p2[0])/2
-	s = np.array([2+(r/256), 4, (2+(255-r))/256])
+	r = (int(p1[0])+int(p2[0]))/2
+	s = np.array([2+(r/256), 4, (2+(255-r))/256], dtype = np.int32)
 	px = p1 - p2
 	
-	dis = np.sqrt( np.sum( px[i]*px[i]*s[i] for i in range(3) ) )
+	dis = np.sqrt( np.sum( int(px[i])*int(px[i])*s[i] for i in range(3) ) )
 	
 	return dis
 	
