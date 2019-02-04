@@ -3,6 +3,18 @@ from kmeans import rgb_distance
 import cv2
 
 def ptp_idm(im1, im2):
+	"""
+	Image Diversion Meassurement: a way to meassure the diversion 
+	between two images by meassuring the rgb distance of both pixel
+	by pixel and reducing to a numerical value
+	
+	Arguments:
+	im1: numpy 3d numerical array
+	im2: numpy 3d numerical array
+	
+	Output:
+	idm: float
+	"""
 	
 	if(im1.shape != im2.shape):
 		error_msg = 'Images must have the same dimensions for a ptp'
