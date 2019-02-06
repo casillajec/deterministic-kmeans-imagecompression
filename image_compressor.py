@@ -41,6 +41,7 @@ if __name__ == '__main__':
 	t0 = time.time()
 	c_means, clusters, mse = k_means(image, K)
 	t1 = time.time()
+	print('Time for k-means:', t1-t0, 's')
 	
 	# Create compressed image
 	compressed_image = np.zeros(image.shape, dtype = np.uint8)
@@ -57,5 +58,4 @@ if __name__ == '__main__':
 	
 	print('Done compressing!\nFinal MSE:', mse)
 	print('IDM:', ptp_idm(image, compressed_image))
-	print('Took:', t1-t0, 's')
 	

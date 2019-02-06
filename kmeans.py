@@ -16,20 +16,27 @@ def k_means(data, k):
 	mse: float
 	"""
 	
+	# Get unique datapoints and element count for faster clusterization
 	t0 = time.time()
-	# Initialize cluster means randomly
-	c_means = deterministic_fft(data, k, rgb_distance).astype(np.float32)
+	unique_datap, el_count = get_uniques(data)
 	t1 = time.time()
-	print('Time for FFT:', t1-t0, 's')
+	print('Time for unique extraction:', t1-t0, 's')
+	print('Data shape:', data.shape, 'Uniques shape:', unique_datap.shape)
+	
+	t0 = time.time()
+	# Initialize cluster randomly
+	c_means = (unique_datap[np.random.choice(unique_datap.shape[0], k, replace = False)]).astype(np.float32)
+	t1 = time.time()
+	print('Time for random selection:', t1-t0, 's')
 	
 	# Initial clusterization
-	clusters = clusterize(data, c_means)
+	clusters = clusterize(unique_datap, c_means)
 	
 	while(True):
 		
 		# Update means
 		old_means = c_means
-		c_means = get_means(data, clusters, old_means)
+		c_means = get_means(unique_datap, clusters, old_means)
 		
 		dif = c_means - old_means
 		print('avg dif:', np.mean(dif))
@@ -38,12 +45,27 @@ def k_means(data, k):
 			break
 			
 		# Reclusterize
-		clusters = clusterize(data, c_means)
+		clusters = clusterize(unique_datap, c_means)
 		
 	# Calculate clusters mse
-	mse = get_mse(data, clusters, c_means)
+	t0 = time.time()
+	mse = get_mse(unique_datap, clusters, c_means)
+	t1 = time.time()
+	print('Time for MSE:', t1-t0, 's')
 	
-	return c_means, clusters, mse
+	# Stuff that I will explain later
+	t0 = time.time()
+	clusters2 = np.ndarray(
+		shape = [data.shape[0]],
+		dtype = np.int32
+	)
+	for i in range(clusters.shape[0]):
+		idx = np.where(np.all(data == unique_datap[i], axis = 1))
+		clusters2[idx] = clusters[i]
+	t1 = time.time()
+	print('Time cluster reshaping(?):', t1-t0, 's')
+	
+	return c_means, clusters2, mse
 	
 def clusterize(data, c_means):
 	"""
@@ -149,6 +171,36 @@ def rgb_distance(p1, p2):
 	dis = np.sqrt(np.sum(int(px[i])*int(px[i])*s[i] for i in range(3)))
 	
 	return dis
+	
+def get_uniques(data):
+	"""
+	returns unique datapoints and the count for each element
+	
+	Arguments:
+	data: numpy 2d numerical array
+	
+	Output:
+	unique_elems: numpy 2d numerical array
+	count: numpy 2d numerical array
+	"""
+	element_count = {}
+	
+	for datap in data:
+		key = str(datap)
+		if(element_count.get(key)):
+			element_count[key] += 1
+		else:
+			element_count[str(datap)] = 1
+	
+	unique_elems = np.ndarray(shape = [len(element_count), data.shape[1]], dtype = data.dtype)
+	count = np.ndarray(shape = [len(element_count)], dtype = np.int32)
+	
+	for i, elem_pair in enumerate(element_count.items()):
+		elem = np.fromstring(elem_pair[0][1:-1], dtype = data.dtype, sep = ' ')
+		unique_elems[i] = elem
+		count[i] = elem_pair[1]
+	
+	return unique_elems, count
 	
 	
 if __name__ == '__main__':
