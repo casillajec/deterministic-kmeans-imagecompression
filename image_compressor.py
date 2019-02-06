@@ -53,7 +53,7 @@ if __name__ == '__main__':
 	
 	# Store original and resulting image in png format
 	cv2.imwrite('original.png', image)
-	cv2.imwrite('compressed.png', compressed_image)
+	cv2.imwrite('compressed_master.png', compressed_image)
 	
 	print('Done compressing!\nFinal MSE:', mse)
 	print('IDM:', ptp_idm(image, compressed_image))
