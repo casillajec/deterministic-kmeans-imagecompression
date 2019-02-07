@@ -16,8 +16,16 @@ def k_means(data, k):
 	clusters: numpy 1d numerical array
 	mse: float
 	"""
-	
-	# Get unique datapoints and element count for faster clusterization
+	# Check that the amount of clusters is less or equal than the
+	# total amount of points
+	if(k > data.shape[0]):
+		error_msg = 'The amount of clusters has to be less'
+		error_msg += 'or equal than the amount of total data points.\n'
+		error_msg += 'Clusters: {}\nTotal datapoints: {}.'
+		raise ValueError(error_msg.format(k, data.shape[0]))
+		
+	# Get unique datapoints, their mapping to the original dataset
+	# and element count for faster clusterization
 	t0 = time.time()
 	unique_datap, el_count, mapping = get_uniques_mapping(data)
 	t1 = time.time()
@@ -26,8 +34,9 @@ def k_means(data, k):
 	
 	t0 = time.time()
 	# Initialize cluster randomly
-	#c_means = deterministic_fft(data, k, rgb_distance).astype(np.float32)
-	c_means = (unique_datap[np.random.choice(unique_datap.shape[0], k, replace = False)]).astype(np.float32)
+	c_means = deterministic_fft(unique_datap, el_count, k, rgb_distance).astype(np.float32)
+	#c_means = (unique_datap[np.random.choice(unique_datap.shape[0], k, replace = False)]).astype(np.float32)
+	#print('initial\n', c_means)
 	t1 = time.time()
 	print('Time for init mean selection:', t1-t0, 's')
 	
@@ -40,8 +49,11 @@ def k_means(data, k):
 		old_means = c_means
 		c_means = get_means(unique_datap, clusters, old_means)
 		
+		#print('c_means\n', c_means)
+		#print('old_means\n', old_means)
 		dif = c_means - old_means
-		print('avg dif:', np.mean(dif))
+		#print('avg dif:', np.mean(dif))
+		#print('dif:', dif)
 		# If means didn't change, break the loop
 		if(np.all(dif < np.finfo(c_means.dtype).eps)):
 			break
@@ -50,10 +62,7 @@ def k_means(data, k):
 		clusters = clusterize(unique_datap, c_means)
 		
 	# Calculate clusters mse
-	t0 = time.time()
 	mse = get_mse(unique_datap, clusters, c_means)
-	t1 = time.time()
-	print('Time for MSE:', t1-t0, 's')
 	
 	# Remapping unique clusters to original dataset
 	t0 = time.time()
@@ -121,7 +130,7 @@ def get_means(data, clusters, old_means):
 	Output:
 	new_means numpy 2d numerical array
 	"""
-	new_means = old_means
+	new_means = old_means.copy()
 	mean_count = np.ones(old_means.shape[0], dtype = np.int64)
 	
 	for i in range(data.shape[0]):

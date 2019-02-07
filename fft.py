@@ -1,6 +1,6 @@
 import numpy as np
 
-def deterministic_fft(data, n, distance_f):
+def deterministic_fft(unique_dpts, data_count, n, distance_f):
 	"""
 	deterministic Farthest First Traversal implementation with n points
 	using mode as starting point
@@ -13,20 +13,12 @@ def deterministic_fft(data, n, distance_f):
 	Output:
 	n_traversed: numpy 2d numerical array
 	"""
-	# Check the amount of points to traverse are less or equal than the
-	# total amount of points
-	if(n > data.shape[0]):
-		error_msg = 'The amount of points to traverse has to be less'
-		error_msg += 'or equal than the amount of total points.\n'
-		error_msg += 'Points to traverse: {}\nTotal points: {}.'
-		raise ValueError(error_msg.format(n, data.shape[0]))
-	
 	# Create n_traversed array
-	n_traversed = np.ndarray([n, data.shape[1]], dtype = data.dtype)
+	n_traversed = np.ndarray([n, unique_dpts.shape[1]], dtype = unique_dpts.dtype)
 	
 	# Select mode as the starting point
 	# Also extract array with unique datapoints
-	start_p, unique_dpts = get_mode(data)
+	start_p = get_mode(unique_dpts, data_count)
 	
 	# Add startng point to traversed list and remove from datapoints
 	idx = np.where(np.all(unique_dpts == start_p, axis = 1))
@@ -53,7 +45,7 @@ def deterministic_fft(data, n, distance_f):
 	
 	return n_traversed
 	
-def get_mode(data):
+def get_mode(unique_data, data_count):
 	"""
 	returns mode row from data array and a list with unique elements
 	
@@ -64,27 +56,13 @@ def get_mode(data):
 	mode: numpy 1d numerical array
 	unique_elems: numpy 2d numerical array
 	"""
-	element_count = {}
-	
-	for datap in data:
-		key = str(datap)
-		if(element_count.get(key)):
-			element_count[key] += 1
-		else:
-			element_count[str(datap)] = 1
-	
 	max_count = 0
 	mode = None
-	unique_elems = []
-	for elem, count in element_count.items():
-		elem = np.fromstring(elem[1:-1], dtype = data.dtype, sep = ' ')
-		unique_elems.append(elem)
-		if(count > max_count):
-			mode = elem
+	for i in range(unique_data.shape[0]):
+		if(data_count[i] > max_count):
+			mode = unique_data[i]
 	
-	unique_elems = np.array(unique_elems, dtype = data.dtype)
-	
-	return mode, unique_elems
+	return mode
 
 if __name__ == '__main__':	
 	def euc_distance(p1, p2):
