@@ -1,6 +1,7 @@
 import numpy as np
 import time
 from fft import deterministic_fft
+from collections import defaultdict
 
 def k_means(data, k):
 	"""
@@ -18,16 +19,17 @@ def k_means(data, k):
 	
 	# Get unique datapoints and element count for faster clusterization
 	t0 = time.time()
-	unique_datap, el_count = get_uniques(data)
+	unique_datap, el_count, mapping = get_uniques_mapping(data)
 	t1 = time.time()
 	print('Time for unique extraction:', t1-t0, 's')
 	print('Data shape:', data.shape, 'Uniques shape:', unique_datap.shape)
 	
 	t0 = time.time()
 	# Initialize cluster randomly
+	#c_means = deterministic_fft(data, k, rgb_distance).astype(np.float32)
 	c_means = (unique_datap[np.random.choice(unique_datap.shape[0], k, replace = False)]).astype(np.float32)
 	t1 = time.time()
-	print('Time for random selection:', t1-t0, 's')
+	print('Time for init mean selection:', t1-t0, 's')
 	
 	# Initial clusterization
 	clusters = clusterize(unique_datap, c_means)
@@ -53,19 +55,19 @@ def k_means(data, k):
 	t1 = time.time()
 	print('Time for MSE:', t1-t0, 's')
 	
-	# Stuff that I will explain later
+	# Remapping unique clusters to original dataset
 	t0 = time.time()
-	clusters2 = np.ndarray(
+	clusters_mapping = np.ndarray(
 		shape = [data.shape[0]],
 		dtype = np.int32
 	)
-	for i in range(clusters.shape[0]):
-		idx = np.where(np.all(data == unique_datap[i], axis = 1))
-		clusters2[idx] = clusters[i]
+	for i in range(len(mapping)):
+		for idx in mapping[i]:
+			clusters_mapping[idx] = clusters[i]
 	t1 = time.time()
-	print('Time cluster reshaping(?):', t1-t0, 's')
+	print('Time cluster remapping:', t1-t0, 's')
 	
-	return c_means, clusters2, mse
+	return c_means, clusters_mapping, mse
 	
 def clusterize(data, c_means):
 	"""
@@ -172,9 +174,10 @@ def rgb_distance(p1, p2):
 	
 	return dis
 	
-def get_uniques(data):
+def get_uniques_mapping(data):
 	"""
-	returns unique datapoints and the count for each element
+	returns unique datapoints together with a mapping for their original
+	position in the dataset and the count for each element
 	
 	Arguments:
 	data: numpy 2d numerical array
@@ -182,25 +185,32 @@ def get_uniques(data):
 	Output:
 	unique_elems: numpy 2d numerical array
 	count: numpy 2d numerical array
+	mapping: python list of list of int
 	"""
-	element_count = {}
+	element_mapping = defaultdict(list)
 	
-	for datap in data:
+	for i, datap in enumerate(data):
 		key = str(datap)
-		if(element_count.get(key)):
-			element_count[key] += 1
-		else:
-			element_count[str(datap)] = 1
+		element_mapping[key].append(i)
 	
-	unique_elems = np.ndarray(shape = [len(element_count), data.shape[1]], dtype = data.dtype)
-	count = np.ndarray(shape = [len(element_count)], dtype = np.int32)
+	n_uniques = len(element_mapping)
+	unique_elems = np.ndarray(
+		shape = [n_uniques, data.shape[1]],
+		dtype = data.dtype
+	)
+	count = np.ndarray(
+		shape = [n_uniques],
+		dtype = np.int32
+	)
+	mapping = []
 	
-	for i, elem_pair in enumerate(element_count.items()):
-		elem = np.fromstring(elem_pair[0][1:-1], dtype = data.dtype, sep = ' ')
+	for i, map_pair in enumerate(element_mapping.items()):
+		elem = np.fromstring(map_pair[0][1:-1], dtype = data.dtype, sep = ' ')
 		unique_elems[i] = elem
-		count[i] = elem_pair[1]
-	
-	return unique_elems, count
+		mapping.append(map_pair[1])
+		count[i] = len(map_pair[1])
+		
+	return unique_elems, count, mapping
 	
 	
 if __name__ == '__main__':
