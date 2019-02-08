@@ -1,9 +1,14 @@
 import numpy as np
 import time
 from fft import deterministic_fft
+from uniform_mode_dist import uniform_mode_dist_init
 from collections import defaultdict
 
-def k_means(data, k):
+RANDOM = 0
+FFT = 1
+UMDI = 2
+
+def k_means(data, k, init = UMDI):
 	"""
 	k-means implementation
 	
@@ -32,11 +37,17 @@ def k_means(data, k):
 	print('Time for unique extraction:', t1-t0, 's')
 	print('Data shape:', data.shape, 'Uniques shape:', unique_datap.shape)
 	
-	t0 = time.time()
+	
 	# Initialize cluster randomly
-	c_means = deterministic_fft(unique_datap, el_count, k, rgb_distance).astype(np.float32)
-	#c_means = (unique_datap[np.random.choice(unique_datap.shape[0], k, replace = False)]).astype(np.float32)
-	#print('initial\n', c_means)
+	t0 = time.time()
+	if(init == RANDOM):
+		c_means = (unique_datap[np.random.choice(unique_datap.shape[0], k, replace = False)]).astype(np.float32)
+	elif(init == FFT):
+		c_means = deterministic_fft(unique_datap, el_count, k, rgb_distance).astype(np.float32)
+	elif(init == UMDI):
+		c_means = uniform_mode_dist_init(unique_datap, el_count, k, rgb_distance).astype(np.float32)
+	else:
+		raise ValueError('Unknown initialization')
 	t1 = time.time()
 	print('Time for init mean selection:', t1-t0, 's')
 	
@@ -48,12 +59,8 @@ def k_means(data, k):
 		# Update means
 		old_means = c_means
 		c_means = get_means(unique_datap, clusters, old_means)
-		
-		#print('c_means\n', c_means)
-		#print('old_means\n', old_means)
 		dif = c_means - old_means
-		#print('avg dif:', np.mean(dif))
-		#print('dif:', dif)
+
 		# If means didn't change, break the loop
 		if(np.all(dif < np.finfo(c_means.dtype).eps)):
 			break

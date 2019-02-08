@@ -24,6 +24,13 @@ if __name__ == '__main__':
 		type = int,
 		help = 'Number of colors'
 	)
+	ap.add_argument(
+		'--init',
+		required = False,
+		default = 2
+		type = int
+		help = 'Initialization method'
+	)
 	args = ap.parse_args()
 	
 	# Define constants
@@ -57,5 +64,5 @@ if __name__ == '__main__':
 	cv2.imwrite('compressed_master.png', compressed_image)
 	
 	print('Done compressing!\nFinal MSE:', mse)
-	print('IDM:', ptp_idm(image, compressed_image))
+	#print('IDM:', ptp_idm(image, compressed_image))
 	
