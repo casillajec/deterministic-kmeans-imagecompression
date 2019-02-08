@@ -4,17 +4,15 @@ from fft import deterministic_fft
 from uniform_mode_dist import uniform_mode_dist_init
 from collections import defaultdict
 
-RANDOM = 0
-FFT = 1
-UMDI = 2
-
-def k_means(data, k, init = UMDI):
+def k_means(data, k, distance_f, init_f = uniform_mode_dist_init):
 	"""
 	k-means implementation
 	
 	Arguments:
 	data: numpy 2d numerical array
 	k: int
+	distance_f: function of datapoint x datapoint -> float
+	init_f: function of 2d array x 1d array x int x function -> 2d array
 	
 	Output:
 	c_means: numpy 2d numerical array
@@ -40,19 +38,12 @@ def k_means(data, k, init = UMDI):
 	
 	# Initialize cluster randomly
 	t0 = time.time()
-	if(init == RANDOM):
-		c_means = (unique_datap[np.random.choice(unique_datap.shape[0], k, replace = False)]).astype(np.float32)
-	elif(init == FFT):
-		c_means = deterministic_fft(unique_datap, el_count, k, rgb_distance).astype(np.float32)
-	elif(init == UMDI):
-		c_means = uniform_mode_dist_init(unique_datap, el_count, k, rgb_distance).astype(np.float32)
-	else:
-		raise ValueError('Unknown initialization')
+	c_means = init_f(unique_datap, el_count, k, distance_f).astype(np.float32)
 	t1 = time.time()
 	print('Time for init mean selection:', t1-t0, 's')
 	
 	# Initial clusterization
-	clusters = clusterize(unique_datap, c_means)
+	clusters = clusterize(unique_datap, c_means, distance_f)
 	
 	while(True):
 		
@@ -66,10 +57,10 @@ def k_means(data, k, init = UMDI):
 			break
 			
 		# Reclusterize
-		clusters = clusterize(unique_datap, c_means)
+		clusters = clusterize(unique_datap, c_means, distance_f)
 		
 	# Calculate clusters mse
-	mse = get_mse(unique_datap, clusters, c_means)
+	mse = get_mse(unique_datap, clusters, c_means, distance_f)
 	
 	# Remapping unique clusters to original dataset
 	t0 = time.time()
@@ -85,7 +76,7 @@ def k_means(data, k, init = UMDI):
 	
 	return c_means, clusters_mapping, mse
 	
-def clusterize(data, c_means):
+def clusterize(data, c_means, distance_f):
 	"""
 	given a list of datapoints and a list of means it returns a new 
 	categorization of the data by clusters with c_means as central points
@@ -114,7 +105,7 @@ def clusterize(data, c_means):
 		min_idx = -1
 		
 		for i in range(k):
-			cluster_i_dis = rgb_distance(datap, c_means[i])
+			cluster_i_dis = distance_f(datap, c_means[i])
 			if(cluster_i_dis < min_dis):
 				min_dis = cluster_i_dis
 				min_idx = i
@@ -150,7 +141,7 @@ def get_means(data, clusters, old_means):
 	
 	return new_means
 	
-def get_mse(data, clusters, c_means):
+def get_mse(data, clusters, c_means, distance_f):
 	"""
 	given a list of datapoints, a cluster categorization of these and
 	it's central points, it returns the Mean Square Error, a meassurement
@@ -166,29 +157,9 @@ def get_mse(data, clusters, c_means):
 	"""
 	mse = 0
 	for i in range(data.shape[0]):
-		mse += np.power(rgb_distance(data[i], c_means[clusters[i]]), 2)
+		mse += np.power(distance_f(data[i], c_means[clusters[i]]), 2)
 		
 	return mse
-	
-def rgb_distance(p1, p2):
-	"""
-	given two rgb pixels, returns the rgb distance from the first to
-	the second
-	
-	Arguments:
-	p1: numpy 1d numerical array with shape [3]
-	p2: numpy 1d numerical array with shape [3]
-	
-	Output:
-	dis: float
-	"""
-	r = (int(p1[0])+int(p2[0]))/2
-	s = np.array([2+(r/256), 4, (2+(255-r))/256], dtype = np.float32)
-	px = p1 - p2
-	
-	dis = np.sqrt(np.sum(int(px[i])*int(px[i])*s[i] for i in range(3)))
-	
-	return dis
 	
 def get_uniques_mapping(data):
 	"""
@@ -227,6 +198,10 @@ def get_uniques_mapping(data):
 		count[i] = len(map_pair[1])
 		
 	return unique_elems, count, mapping
+	
+def random_init(unique_datap, el_count, k, distance_f):
+	
+	return (unique_datap[np.random.choice(unique_datap.shape[0], k, replace = False)])
 	
 	
 if __name__ == '__main__':

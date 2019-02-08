@@ -1,5 +1,6 @@
 from kmeans import k_means
-from image_diversion import ptp_idm
+from rgb_distance import rgb_distance
+import cProfile
 import numpy as np
 import argparse
 import time
@@ -27,8 +28,8 @@ if __name__ == '__main__':
 	ap.add_argument(
 		'--init',
 		required = False,
-		default = 2
-		type = int
+		default = 2,
+		type = int,
 		help = 'Initialization method'
 	)
 	args = ap.parse_args()
@@ -46,8 +47,9 @@ if __name__ == '__main__':
 	
 	# Run k-means
 	t0 = time.time()
-	c_means, clusters, mse = k_means(image, K)
+	c_means, clusters, mse = k_means(image, K, rgb_distance)
 	t1 = time.time()
+	exit()
 	print('Time for k-means:', t1-t0, 's')
 	
 	# Create compressed image
@@ -64,5 +66,4 @@ if __name__ == '__main__':
 	cv2.imwrite('compressed_master.png', compressed_image)
 	
 	print('Done compressing!\nFinal MSE:', mse)
-	#print('IDM:', ptp_idm(image, compressed_image))
 	
