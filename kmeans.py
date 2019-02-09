@@ -40,7 +40,7 @@ def k_means(data, k, distance_f, init_f):
 	t0 = time.time()
 	c_means = init_f(unique_datap, el_count, k, distance_f).astype(np.float32)
 	t1 = time.time()
-	time_profile['init point selection'] = t1 - t0
+	time_profile['init_point_selection'] = t1 - t0
 	
 	# Initial clusterization
 	clusters = clusterize(unique_datap, c_means, distance_f)
@@ -198,10 +198,6 @@ def get_uniques_mapping(data):
 		count[i] = len(map_pair[1])
 		
 	return unique_elems, count, mapping
-	
-def random_init(unique_datap, el_count, k, distance_f):
-	
-	return (unique_datap[np.random.choice(unique_datap.shape[0], k, replace = False)])
 	
 	
 if __name__ == '__main__':

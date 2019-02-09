@@ -20,6 +20,7 @@ def compress_image(im_path, k, init_f = uniform_mode_dist_init):
 	Output:
 	image: numpy 2d numerical array
 	compressed_image numpy 2d numerical array
+	mse: float
 	time_profile: dict of string -> float
 	"""
 	# Read image
@@ -44,9 +45,7 @@ def compress_image(im_path, k, init_f = uniform_mode_dist_init):
 	image = image.reshape(original_shape).astype(np.uint8)
 	compressed_image = compressed_image.reshape(original_shape).astype(np.uint8)
 	
-	return image, compressed_image, time_profile
-	
-	print('Done compressing!\nFinal MSE:', mse)
+	return image, compressed_image, mse, time_profile
 
 if __name__ == '__main__':
 	
@@ -76,7 +75,7 @@ if __name__ == '__main__':
 	# Image data
 	im_name = IM_PATH.split('/')[-1].split('.')[:-1][0]
 	
-	image, compressed_image, _ = compress_image(IM_PATH, K)
+	image, compressed_image, _, _ = compress_image(IM_PATH, K)
 	
 	# Store original and resulting image in png format
 	if(not os.path.isdir('./compressed')):
