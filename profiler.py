@@ -2,6 +2,7 @@ from image_compressor import compress_image
 from fft import deterministic_fft
 from uniform_mode_dist import uniform_mode_dist_init
 from random_init import random_init
+from collections import defaultdict
 import cv2
 import os
 
@@ -20,7 +21,7 @@ class DataRow(object):
 def best_random(n_cases = 100):
 	best_mse = float('inf')
 	best_compressed = None
-	best_time_profile = None
+	total_time_profile = defaultdict(float)
 	
 	for _ in range(n_cases):
 		image, compressed, mse, time_profile = compress_image(im_path, c, random_init)
@@ -29,7 +30,8 @@ def best_random(n_cases = 100):
 		if(mse < best_mse):
 			best_mse = mse
 			best_compressed = compressed
-			best_time_profile = time_profile
+			for key, value in time_profile.items():
+				total_time_profile[key] += value
 			
 	return image, best_compressed, best_mse, best_time_profile
 	
@@ -54,11 +56,18 @@ def generate_csv(out_path, data_rows):
 	
 
 if __name__ == '__main__':
+	if(os.name == 'nt'):
+		folder_sep = '\\'
+	elif(os.name == 'posix'):
+		folder_sep = '/'
+	else:
+		print('I can only run on Linux and Windows')
+		exit()
 	
 	if(not os.path.exists('profile_images')):
 		raise Exception('\'profile_images\' folder not found')
 	
-	im_paths = ['./profile_images/' + file for file in os.listdir('profile_images')]
+	im_paths = ['profile_images{}'.format(folder_sep) + file for file in os.listdir('profile_images')]
 	colors = [4, 8, 16, 32, 64]
 	
 	out_path = 'profile.csv'
@@ -70,24 +79,24 @@ if __name__ == '__main__':
 		for im_path in im_paths:
 			print('Case{}/{}'.format(i, n_cases))
 			i = i+1
-			im_name = im_path.split('/')[-1].split('.')[:-1][0]
+			im_name = im_path.split(folder_sep)[-1].split('.')[:-1][0]
 			# Random init
 			image, compressed, mse, time_profile = best_random(100)
 			data_rows.append(DataRow(im_name, 'random', c, mse, time_profile))
-			cv2.imwrite('./compressed/{}_{}_{}colors.png'.format(im_name, 'random', c), compressed)
+			cv2.imwrite('compressed{}{}_{}_{}colors.png'.format(folder_sep, im_name, 'random', c), compressed)
 			
 			# FFT init
 			_, compressed, mse, time_profile = compress_image(im_path, c, deterministic_fft)
 			data_rows.append(DataRow(im_name, 'fft', c, mse, time_profile))
-			cv2.imwrite('./compressed/{}_{}_{}colors.png'.format(im_name, 'fft', c), compressed)
+			cv2.imwrite('compressed{}{}_{}_{}colors.png'.format(folder_sep, im_name, 'fft', c), compressed)
 			
 			# UMDI
 			_, compressed, mse, time_profile = compress_image(im_path, c, uniform_mode_dist_init)
 			data_rows.append(DataRow(im_name, 'umdi', c, mse, time_profile))
-			cv2.imwrite('./compressed/{}_{}_{}colors.png'.format(im_name, 'umdi', c), compressed)
+			cv2.imwrite('compressed{}{}_{}_{}colors.png'.format(folder_sep, im_name, 'umdi', c), compressed)
 			
-			if(not os.path.exists('./compressed/{}_original.png'.format(im_name))):
-				cv2.imwrite('./compressed/{}_original.png'.format(im_name), image)
+			if(not os.path.exists('compressed{}{}_original.png'.format(folder_sep, im_name))):
+				cv2.imwrite('compressed{}{}_original.png'.format(folder_sep, im_name), image)
 			
 	generate_csv(out_file, data_rows)
 	
