@@ -2,7 +2,7 @@ import numpy as np
 import time
 from collections import defaultdict
 
-def k_means(data, k, distance_f, init_f):
+def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 	"""
 	k-means implementation
 	
@@ -32,7 +32,7 @@ def k_means(data, k, distance_f, init_f):
 	# Get unique datapoints, their mapping to the original dataset
 	# and element count for faster clusterization
 	t0 = time.time()
-	unique_datap, el_count, mapping = get_uniques_mapping(data)
+	unique_datap, el_count, mapping = get_uniques_mapping(data, datap_to_hashable, hashable_to_datap)
 	t1 = time.time()
 	time_profile['unique_mapping'] = t1 - t0
 	
@@ -161,7 +161,7 @@ def get_mse(data, clusters, c_means, distance_f):
 		
 	return mse
 	
-def get_uniques_mapping(data):
+def get_uniques_mapping(data, datap_to_hashable, hashable_to_datap):
 	"""
 	returns unique datapoints together with a mapping for their original
 	position in the dataset and the count for each element
@@ -177,8 +177,7 @@ def get_uniques_mapping(data):
 	element_mapping = defaultdict(list)
 	
 	for i, datap in enumerate(data):
-		key = str(datap)
-		element_mapping[key].append(i)
+		element_mapping[datap_to_hashable(datap)].append(i)
 	
 	n_uniques = len(element_mapping)
 	unique_elems = np.ndarray(
@@ -192,7 +191,7 @@ def get_uniques_mapping(data):
 	mapping = []
 	
 	for i, map_pair in enumerate(element_mapping.items()):
-		elem = np.fromstring(map_pair[0][1:-1], dtype = data.dtype, sep = ' ')
+		elem = hashable_to_datap(map_pair[0])
 		unique_elems[i] = elem
 		mapping.append(map_pair[1])
 		count[i] = len(map_pair[1])

@@ -1,6 +1,7 @@
 from kmeans import k_means
 from rgb_distance import rgb_distance
 from uniform_mode_dist import uniform_mode_dist_init
+from pixel_to_hashable import pixel_to_str, str_to_pixel
 import numpy as np
 import argparse
 import time
@@ -32,7 +33,7 @@ def compress_image(im_path, k, init_f = uniform_mode_dist_init):
 	
 	# Run k-means
 	t0 = time.time()
-	c_means, clusters, mse, time_profile = k_means(image, k, rgb_distance, init_f)
+	c_means, clusters, mse, time_profile = k_means(image, k, rgb_distance, init_f, pixel_to_str, str_to_pixel)
 	t1 = time.time()
 	time_profile['k_means'] = t1 - t0
 	
@@ -66,6 +67,12 @@ if __name__ == '__main__':
 		type = int,
 		help = 'Number of colors'
 	)
+	ap.add_argument(
+		'-t',
+		'--time',
+		action = 'store_true',
+		help = 'print timings'
+	)
 	args = ap.parse_args()
 	
 	# Define constants
@@ -75,7 +82,7 @@ if __name__ == '__main__':
 	# Image data
 	im_name = IM_PATH.split('/')[-1].split('.')[:-1][0]
 	
-	image, compressed_image, _, _ = compress_image(IM_PATH, K)
+	image, compressed_image, _, time_profile = compress_image(IM_PATH, K)
 	
 	# Store original and resulting image in png format
 	if(not os.path.isdir('./compressed')):
@@ -83,6 +90,11 @@ if __name__ == '__main__':
 		
 	cv2.imwrite('./compressed/{}_original.png'.format(im_name), image)
 	cv2.imwrite('./compressed/{}_{}colors.png'.format(im_name, K), compressed_image)
+	
+	if(args.time):
+		print('Time profile')
+		for metric, value in time_profile.items():
+			print('{}: {}'.format(metric, value))
 	
 	
 	
