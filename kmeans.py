@@ -1,10 +1,8 @@
 import numpy as np
 import time
-from fft import deterministic_fft
-from uniform_mode_dist import uniform_mode_dist_init
 from collections import defaultdict
 
-def k_means(data, k, distance_f, init_f = uniform_mode_dist_init):
+def k_means(data, k, distance_f, init_f):
 	"""
 	k-means implementation
 	
@@ -18,7 +16,11 @@ def k_means(data, k, distance_f, init_f = uniform_mode_dist_init):
 	c_means: numpy 2d numerical array
 	clusters: numpy 1d numerical array
 	mse: float
+	time_profile: dict of string -> float
 	"""
+	# Dict for holding execution time values
+	time_profile = {}
+	
 	# Check that the amount of clusters is less or equal than the
 	# total amount of points
 	if(k > data.shape[0]):
@@ -32,15 +34,13 @@ def k_means(data, k, distance_f, init_f = uniform_mode_dist_init):
 	t0 = time.time()
 	unique_datap, el_count, mapping = get_uniques_mapping(data)
 	t1 = time.time()
-	print('Time for unique extraction:', t1-t0, 's')
-	print('Data shape:', data.shape, 'Uniques shape:', unique_datap.shape)
-	
+	time_profile['unique_mapping'] = t1 - t0
 	
 	# Initialize cluster randomly
 	t0 = time.time()
 	c_means = init_f(unique_datap, el_count, k, distance_f).astype(np.float32)
 	t1 = time.time()
-	print('Time for init mean selection:', t1-t0, 's')
+	time_profile['init point selection'] = t1 - t0
 	
 	# Initial clusterization
 	clusters = clusterize(unique_datap, c_means, distance_f)
@@ -72,9 +72,9 @@ def k_means(data, k, distance_f, init_f = uniform_mode_dist_init):
 		for idx in mapping[i]:
 			clusters_mapping[idx] = clusters[i]
 	t1 = time.time()
-	print('Time cluster remapping:', t1-t0, 's')
+	time_profile['unique_demapping'] = t1 - t0
 	
-	return c_means, clusters_mapping, mse
+	return c_means, clusters_mapping, mse, time_profile
 	
 def clusterize(data, c_means, distance_f):
 	"""
