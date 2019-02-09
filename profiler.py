@@ -74,17 +74,17 @@ if __name__ == '__main__':
 			# Random init
 			image, compressed, mse, time_profile = best_random(100)
 			data_rows.append(DataRow(im_name, 'random', c, mse, time_profile))
-			cv2.imwrite('./compressed/{}_{}_{}colors.png'.format(im_name, 'random', c))
+			cv2.imwrite('./compressed/{}_{}_{}colors.png'.format(im_name, 'random', c), compressed)
 			
 			# FFT init
-			_, compressed_fft, mse, time_profile = compress_image(im_path, c, deterministic_fft)
+			_, compressed, mse, time_profile = compress_image(im_path, c, deterministic_fft)
 			data_rows.append(DataRow(im_name, 'fft', c, mse, time_profile))
-			cv2.imwrite('./compressed/{}_{}_{}colors.png'.format(im_name, 'fft', c))
+			cv2.imwrite('./compressed/{}_{}_{}colors.png'.format(im_name, 'fft', c), compressed)
 			
 			# UMDI
-			_, compressed_umdi, mse, time_profile = compress_image(im_path, c, uniform_mode_dist_init)
+			_, compressed, mse, time_profile = compress_image(im_path, c, uniform_mode_dist_init)
 			data_rows.append(DataRow(im_name, 'umdi', c, mse, time_profile))
-			cv2.imwrite('./compressed/{}_{}_{}colors.png'.format(im_name, 'umdi', c))
+			cv2.imwrite('./compressed/{}_{}_{}colors.png'.format(im_name, 'umdi', c), compressed)
 			
 			if(not os.path.exists('./compressed/{}_original.png'.format(im_name))):
 				cv2.imwrite('./compressed/{}_original.png'.format(im_name), image)
