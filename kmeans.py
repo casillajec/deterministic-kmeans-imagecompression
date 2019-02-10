@@ -1,6 +1,9 @@
 import numpy as np
 import time
 from collections import defaultdict
+import psutil
+import os
+import resource
 
 EPS_F32 = np.finfo(np.float32).eps
 
@@ -20,8 +23,6 @@ def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 	mse: float
 	time_profile: dict of string -> float
 	"""
-	# Dict for holding execution time values
-	time_profile = {}
 	
 	# Check that the amount of clusters is less or equal than the
 	# total amount of points
@@ -30,6 +31,13 @@ def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 		error_msg += 'or equal than the amount of total data points.\n'
 		error_msg += 'Clusters: {}\nTotal datapoints: {}.'
 		raise ValueError(error_msg.format(k, data.shape[0]))
+		
+	# Dict for holding execution time values
+	time_profile = {}
+	
+	# Get smallest possible dtype
+	cluster_dtype = get_spid(k)
+	print(cluster_dtype)
 		
 	# Get unique datapoints, their mapping to the original dataset
 	# and element count for faster clusterization
@@ -45,7 +53,7 @@ def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 	time_profile['init_point_selection'] = t1 - t0
 	
 	# Initial clusterization
-	clusters = clusterize(unique_datap, c_means, distance_f)
+	clusters = clusterize(unique_datap, c_means, distance_f, cluster_dtype)
 	
 	# First mse
 	mse = get_mse(unique_datap, clusters, c_means, distance_f)
@@ -63,7 +71,7 @@ def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 			break
 			
 		# Reclusterize
-		clusters = clusterize(unique_datap, c_means, distance_f)
+		clusters = clusterize(unique_datap, c_means, distance_f, cluster_dtype)
 		
 		# MSE
 		mse = get_mse(unique_datap, clusters, c_means, distance_f)
@@ -90,10 +98,12 @@ def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 			clusters_mapping[idx] = clusters[i]
 	t1 = time.time()
 	time_profile['unique_demapping'] = t1 - t0
+	print('memory:', psutil.Process(os.getpid()).memory_info().rss/(10**6), 'MB')
+	print(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 	
 	return c_means, clusters_mapping, mse, time_profile
 	
-def clusterize(data, c_means, distance_f):
+def clusterize(data, c_means, distance_f, dtype):
 	"""
 	given a list of datapoints and a list of means it returns a new 
 	categorization of the data by clusters with c_means as central points
@@ -111,6 +121,7 @@ def clusterize(data, c_means, distance_f):
 	# Initialize cluster categorization array
 	clusters = np.ndarray(
 		shape = [data.shape[0]],
+		#dtype = dtype
 		dtype = np.int32
 	)
 	
@@ -214,6 +225,25 @@ def get_uniques_mapping(data, datap_to_hashable, hashable_to_datap):
 		count[i] = len(map_pair[1])
 		
 	return unique_elems, count, mapping
+	
+def get_spid(k):
+	"""
+	returns the Smallest Possible Int Dtype that can fit k different
+	ints
+	"""
+	
+	if(k < 256):
+		dtype = np.uint8
+	elif(k < 65536):
+		dtype = np.uint16
+	elif(k < 4294967296):
+		dtype = np.uint32
+	elif(k < 18446744073709551616):
+		dtype = np.uint64
+	else:
+		raise ValueError('K = {} cannot be propperly stored')
+	
+	return dtype
 	
 	
 if __name__ == '__main__':
