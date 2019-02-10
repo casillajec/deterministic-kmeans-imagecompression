@@ -71,7 +71,12 @@ if __name__ == '__main__':
 		'-t',
 		'--time',
 		action = 'store_true',
-		help = 'print timings'
+		help = 'Print time profile'
+	)
+	ap.add_argument(
+		'-mse',
+		action = 'store_true',
+		help = 'Print MSE'
 	)
 	args = ap.parse_args()
 	
@@ -82,7 +87,7 @@ if __name__ == '__main__':
 	# Image data
 	im_name = IM_PATH.split('/')[-1].split('.')[:-1][0]
 	
-	image, compressed_image, _, time_profile = compress_image(IM_PATH, K)
+	image, compressed_image, mse, time_profile = compress_image(IM_PATH, K)
 	
 	# Store original and resulting image in png format
 	if(not os.path.isdir('./compressed')):
@@ -95,6 +100,9 @@ if __name__ == '__main__':
 		print('Time profile')
 		for metric, value in time_profile.items():
 			print('{}: {}'.format(metric, value))
+			
+	if(args.mse):
+		print('MSE:', mse)
 	
 	
 	

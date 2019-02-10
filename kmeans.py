@@ -50,10 +50,11 @@ def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 		# Update means
 		old_means = c_means
 		c_means = get_means(unique_datap, clusters, old_means)
-		dif = c_means - old_means
-
+		dif = np.absolute(c_means - old_means)
+		print('mse:', get_mse(unique_datap, clusters, c_means, distance_f))
 		# If means didn't change, break the loop
-		if(np.all(dif < np.finfo(c_means.dtype).eps)):
+		#if(np.all(dif < np.finfo(c_means.dtype).eps)):
+		if(np.all(dif < 0.7)):
 			break
 			
 		# Reclusterize

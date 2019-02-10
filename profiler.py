@@ -33,7 +33,7 @@ def best_random(n_cases = 100):
 			for key, value in time_profile.items():
 				total_time_profile[key] += value
 			
-	return image, best_compressed, best_mse, best_time_profile
+	return image, best_compressed, best_mse, total_time_profile
 	
 def generate_csv(out_path, data_rows):
 	
