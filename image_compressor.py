@@ -8,6 +8,8 @@ import time
 import cv2
 import os
 
+import resource
+
 def compress_image(im_path, k, init_f = uniform_mode_dist_init):
 	"""
 	returns the original and compressed version of an image together
@@ -88,6 +90,7 @@ if __name__ == '__main__':
 	im_name = IM_PATH.split('/')[-1].split('.')[:-1][0]
 	
 	image, compressed_image, mse, time_profile = compress_image(IM_PATH, K)
+	print('memory:', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000, 'MB')
 	
 	# Store original and resulting image in png format
 	if(not os.path.isdir('./compressed')):

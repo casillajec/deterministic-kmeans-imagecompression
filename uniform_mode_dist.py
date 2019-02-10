@@ -60,7 +60,6 @@ def uniform_mode_dist_init(unique_dpts, el_count, n, distance_f):
 	j = 1
 	for i in range(0, distances.shape[0]):
 		if(j == n):
-			#print(distance_f(mode, init_points[-1]))
 			break
 		elif(distances[i] >= last + tresh):
 			last = distances[i]

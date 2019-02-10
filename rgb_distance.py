@@ -12,10 +12,8 @@ def rgb_distance(p1, p2):
 	Output:
 	dis: float
 	"""
-	r = (int(p1[0])+int(p2[0]))/2
+	r = (float(p1[0]) + float(p2[0]))/2
 	s = np.array([2+(r/256), 4, (2+(255-r))/256], dtype = np.float32)
-	px = p1 - p2
+	px = (p1 - p2).astype(np.float32)
 	
-	dis = np.sqrt(np.sum(int(px[i])*int(px[i])*s[i] for i in range(3)))
-	
-	return dis
+	return np.sqrt(np.sum(px*px*s))
