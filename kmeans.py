@@ -2,6 +2,8 @@ import numpy as np
 import time
 from collections import defaultdict
 
+EPS_F32 = np.finfo(np.float32).eps
+
 def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 	"""
 	k-means implementation
@@ -45,24 +47,38 @@ def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 	# Initial clusterization
 	clusters = clusterize(unique_datap, c_means, distance_f)
 	
+	# First mse
+	mse = get_mse(unique_datap, clusters, c_means, distance_f)
+	
 	while(True):
+		old_means = c_means
+		old_mse = mse
 		
 		# Update means
-		old_means = c_means
 		c_means = get_means(unique_datap, clusters, old_means)
 		dif = np.absolute(c_means - old_means)
-		print('mse:', get_mse(unique_datap, clusters, c_means, distance_f))
+		
 		# If means didn't change, break the loop
-		#if(np.all(dif < np.finfo(c_means.dtype).eps)):
-		if(np.all(dif < 0.7)):
+		if(np.all(dif < EPS_F32)):
 			break
 			
 		# Reclusterize
 		clusters = clusterize(unique_datap, c_means, distance_f)
 		
-	# Calculate clusters mse
-	mse = get_mse(unique_datap, clusters, c_means, distance_f)
-	
+		# MSE
+		mse = get_mse(unique_datap, clusters, c_means, distance_f)
+		
+		# If mse doesn't change, break the loop
+		if(old_mse - mse < EPS_F32):
+			break
+		"""
+		# If MSE doesn't change too much or increases, break the loop
+		mse_change = (mse - old_mse)/old_mse
+		print(mse_change)
+		
+		if(mse_change > 0 or abs(mse_change) < 0.001):
+			mse_stop_
+		"""
 	# Remapping unique clusters to original dataset
 	t0 = time.time()
 	clusters_mapping = np.ndarray(
