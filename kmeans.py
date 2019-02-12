@@ -126,16 +126,8 @@ def clusterize(data, c_means, clusters, k, distance_f):
 	# and assign the index(cluster id) to the clusters categorization
 	# array
 	for j, datap in enumerate(data):
-		min_dis = float('inf')
-		min_idx = None
-		
-		for i in range(k):
-			cluster_i_dis = distance_f(datap, c_means[i])
-			if(cluster_i_dis < min_dis):
-				min_dis = cluster_i_dis
-				min_idx = i
-				
-		clusters[j] = min_idx
+		distances = distance_f(datap, c_means)		
+		clusters[j] = np.argmin(distances)
 	
 def get_means(data, clusters, new_means, old_means, mean_count):
 	"""
