@@ -88,14 +88,13 @@ def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 		# If mse doesn't change, break the loop
 		if(old_mse - mse < EPS_F32):
 			break
-		"""
+		
 		# If MSE doesn't change too much or increases, break the loop
 		mse_change = (mse - old_mse)/old_mse
-		print(mse_change)
 		
 		if(mse_change > 0 or abs(mse_change) < 0.001):
-			mse_stop_
-		"""
+			break
+		
 	# Remapping unique clusters to original dataset
 	t0 = time.time()
 	clusters_mapping = np.ndarray(

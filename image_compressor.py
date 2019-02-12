@@ -67,6 +67,7 @@ if __name__ == '__main__':
 		'--colors',
 		required = True,
 		type = int,
+		nargs = '+',
 		help = 'Number of colors'
 	)
 	ap.add_argument(
@@ -89,23 +90,27 @@ if __name__ == '__main__':
 	# Image data
 	im_name = IM_PATH.split('/')[-1].split('.')[:-1][0]
 	
-	image, compressed_image, mse, time_profile = compress_image(IM_PATH, K)
-	print('memory:', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000, 'MB')
-	
-	# Store original and resulting image in png format
-	if(not os.path.isdir('./compressed')):
-		os.mkdir('./compressed')
+	print('Compressing', im_name)
+	for k in K:
+		print(k, 'colors')
+		image, compressed_image, mse, time_profile = compress_image(IM_PATH, k)
 		
-	cv2.imwrite('./compressed/{}_original.png'.format(im_name), image)
-	cv2.imwrite('./compressed/{}_{}colors.png'.format(im_name, K), compressed_image)
-	
-	if(args.time):
-		print('Time profile')
-		for metric, value in time_profile.items():
-			print('{}: {}'.format(metric, value))
+		# Store original and resulting image in png format
+		if(not os.path.isdir('./compressed')):
+			os.mkdir('./compressed')
 			
-	if(args.mse):
-		print('MSE:', mse)
+		cv2.imwrite('./compressed/{}_original.png'.format(im_name), image)
+		cv2.imwrite('./compressed/{}_{}colors.png'.format(im_name, k), compressed_image)
+		
+		if(args.time):
+			print('Time profile')
+			for metric, value in time_profile.items():
+				print('{}: {}'.format(metric, value))
+				
+		if(args.mse):
+			print('MSE:', mse)
+	
+	print('memory:', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000, 'MB')
 	
 	
 	
