@@ -2,6 +2,8 @@ import numpy as np
 np.seterr(all = 'raise')
 import time
 from collections import defaultdict
+from datetime import datetime
+from utils import vprint
 
 EPS_F32 = np.finfo(np.float32).eps
 
@@ -30,6 +32,7 @@ def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 		error_msg += 'Clusters: {}\nTotal datapoints: {}.'
 		raise ValueError(error_msg.format(k, data.shape[0]))
 	
+	vprint('Initializing variables', 1)
 	# Initialize arrays and data structures	
 	# Dict for holding execution time values
 	time_profile = {}
@@ -45,44 +48,46 @@ def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 	# Mean holders
 	c_means = np.ndarray([k, data.shape[1]], dtype = np.float32)
 	old_means = np.ndarray([k, data.shape[1]], dtype = c_means.dtype)
-		
+	
+	vprint('Getting unique datapoints', 1)
 	# Get unique datapoints, their mapping to the original dataset
 	# and element count for faster clusterization
-	t0 = time.time()
+	t0 = time.perf_counter()
 	unique_datap, el_count, mapping = get_uniques_mapping(data, datap_to_hashable, hashable_to_datap)
-	t1 = time.time()
+	t1 = time.perf_counter()
 	time_profile['unique_mapping'] = t1 - t0
 	
-	# Initialize cluster randomly
-	t0 = time.time()
+	vprint('Choosing starting points', 1)
+	# Initialize cluster
+	t0 = time.perf_counter()
 	c_means = init_f(unique_datap, el_count, k, distance_f).astype(c_means.dtype)
-	t1 = time.time()
+	t1 = time.perf_counter()
 	time_profile['init_point_selection'] = t1 - t0
 	
 	# Send to garbage collector since it won't be used again
 	del el_count
 	
-	# Initial clusterization
-	clusterize(unique_datap, c_means, clusters, k, distance_f)
-	
-	# Initial mse
+	vprint('Performing initial clusterization', 1)
+	# Initial clusterization and mse
+	clusterize(unique_datap, c_means, clusters, distance_f)
 	mse = get_mse(unique_datap, clusters, c_means, distance_f)
 	
+	vprint('Entering loop', 1)
 	while(True):
-		old_mse = mse
-		
 		# Update means
-		get_means(unique_datap, clusters, c_means, old_means, mean_count)
-		dif = np.absolute(c_means - old_means)
+		get_means(unique_datap, clusters, c_means, old_means, mean_count, distance_f)
+		vprint('After get_means ', 2)
 		
 		# If means didn't change, break the loop
-		if(np.all(dif < EPS_F32)):
+		if(np.all(np.absolute(c_means - old_means) < EPS_F32)):
 			break
 			
 		# Reclusterize
-		clusterize(unique_datap, c_means, clusters, k, distance_f)
+		clusterize(unique_datap, c_means, clusters, distance_f)
+		vprint('After clusterize', 2)
 		
 		# MSE
+		old_mse = mse
 		mse = get_mse(unique_datap, clusters, c_means, distance_f)
 		
 		# If mse doesn't change, break the loop
@@ -94,22 +99,23 @@ def k_means(data, k, distance_f, init_f, datap_to_hashable, hashable_to_datap):
 		
 		if(mse_change > 0 or abs(mse_change) < 0.001):
 			break
-		
+	
+	vprint('Remapping values to match original data', 1)
 	# Remapping unique clusters to original dataset
-	t0 = time.time()
+	t0 = time.perf_counter()
 	clusters_mapping = np.ndarray(
 		shape = [data.shape[0]],
-		dtype = np.int32
+		dtype = get_spuid(k)
 	)
 	for i in range(len(mapping)):
 		for idx in mapping[i]:
 			clusters_mapping[idx] = clusters[i]
-	t1 = time.time()
+	t1 = time.perf_counter()
 	time_profile['unique_demapping'] = t1 - t0
 	
 	return c_means, clusters_mapping, mse, time_profile
 	
-def clusterize(data, c_means, clusters, k, distance_f):
+def clusterize(data, c_means, clusters, distance_f):
 	"""
 	given a list of datapoints and a list of means it returns a new 
 	categorization of the data by clusters with c_means as central points
@@ -126,10 +132,10 @@ def clusterize(data, c_means, clusters, k, distance_f):
 	# and assign the index(cluster id) to the clusters categorization
 	# array
 	for j, datap in enumerate(data):
-		distances = distance_f(datap, c_means)		
+		distances = distance_f(datap, c_means)	
 		clusters[j] = np.argmin(distances)
 	
-def get_means(data, clusters, new_means, old_means, mean_count):
+def get_means(data, clusters, new_means, old_means, mean_count, distance_f):
 	"""
 	given a list of datapoints, a cluster categorization of these and
 	it's central points, it returns the new means of this cluster
@@ -152,7 +158,7 @@ def get_means(data, clusters, new_means, old_means, mean_count):
 		mean_count[idx] += 1
 		
 	for i in range(new_means.shape[0]):
-		new_means[i] = new_means[i] / mean_count[i]
+		new_means[i] = new_means[i] / mean_count[i]		
 	
 def get_mse(data, clusters, c_means, distance_f):
 	"""
@@ -172,7 +178,7 @@ def get_mse(data, clusters, c_means, distance_f):
 	for i in range(data.shape[0]):
 		mse += np.power(distance_f(data[i], c_means[clusters[i]]), 2)
 		
-	return mse
+	return mse/data.shape[0]
 	
 def get_uniques_mapping(data, datap_to_hashable, hashable_to_datap):
 	"""
@@ -215,7 +221,7 @@ def get_uniques_mapping(data, datap_to_hashable, hashable_to_datap):
 def get_spuid(k):
 	"""
 	returns the Smallest Possible UInt Dtype that can fit k different
-	ints
+	ints that are > 0
 	
 	Arguments:
 	k: int
@@ -233,7 +239,7 @@ def get_spuid(k):
 	elif(k < 18446744073709551616):
 		dtype = np.uint64
 	else:
-		raise ValueError('K = {} cannot be propperly stored')
+		raise ValueError('K = {} cannot be propperly stored'.format(k))
 	
 	return dtype
 	

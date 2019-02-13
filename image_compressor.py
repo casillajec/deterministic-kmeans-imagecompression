@@ -7,6 +7,7 @@ import argparse
 import time
 import cv2
 import os
+import utils
 
 import resource
 
@@ -81,11 +82,20 @@ if __name__ == '__main__':
 		action = 'store_true',
 		help = 'Print MSE'
 	)
+	ap.add_argument(
+		'-v',
+		'--verbosity',
+		type = int,
+		default = 1,
+		help = 'Verbosity level'
+	)
 	args = ap.parse_args()
 	
 	# Define constants
 	IM_PATH = args.image
 	K = args.colors
+	global vlevel
+	utils.vlevel = args.verbosity
 	
 	# Image data
 	im_name = IM_PATH.split('/')[-1].split('.')[:-1][0]
@@ -98,8 +108,9 @@ if __name__ == '__main__':
 		# Store original and resulting image in png format
 		if(not os.path.isdir('./compressed')):
 			os.mkdir('./compressed')
-			
-		cv2.imwrite('./compressed/{}_original.png'.format(im_name), image)
+		
+		if(not os.path.exists('./compressed/{}_original.png'.format(im_name))):
+			cv2.imwrite('./compressed/{}_original.png'.format(im_name), image)
 		cv2.imwrite('./compressed/{}_{}colors.png'.format(im_name, k), compressed_image)
 		
 		if(args.time):
