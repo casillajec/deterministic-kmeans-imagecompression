@@ -1,5 +1,5 @@
 import numpy as np
-from fft import get_mode
+from .fft import get_mode
 
 def uniform_mode_dist_init(unique_dpts, el_count, n, distance_f):
 	"""

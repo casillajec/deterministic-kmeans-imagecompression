@@ -1,6 +1,6 @@
 from kmeans import k_means
 from rgb_distance import rgb_distance
-from uniform_mode_dist import uniform_mode_dist_init
+from initializers.uniform_mode_dist import uniform_mode_dist_init
 from pixel_to_hashable import pixel_to_str, str_to_pixel
 import numpy as np
 import argparse
