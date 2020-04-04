@@ -158,7 +158,7 @@ def get_means(data, clusters, new_means, old_means, mean_count, distance_f):
 		mean_count[idx] += 1
 		
 	for i in range(new_means.shape[0]):
-		new_means[i] = new_means[i] / mean_count[i]		
+		new_means[i] = new_means[i] / mean_count[i]
 	
 def get_mse(data, clusters, c_means, distance_f):
 	"""
